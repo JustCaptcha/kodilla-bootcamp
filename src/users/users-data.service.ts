@@ -3,7 +3,6 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { User } from './interfaces/user.interface';
 import { uuid } from 'uuidv4';
 import { UpdateUserDTO } from './dto/update-user.dto';
-import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class UsersDataService {
@@ -14,8 +13,13 @@ export class UsersDataService {
   }
 
   getUserById(id: string): User {
-    const user = this.users.find((product) => product.id === id);
+    const user = this.users.find((user) => user.id === id);
     if (!user) throw new NotFoundException('user is not found.');
+    return user;
+  }
+
+  getUserByEmail(email: string): User {
+    const user = this.users.find((user) => user.email === email);
     return user;
   }
 
@@ -26,7 +30,7 @@ export class UsersDataService {
       ...item,
       dateOfBirth: date,
     };
-    this.users.push(newItem);
+    this.users = [...this.users, newItem];
     return newItem;
   }
 
@@ -48,7 +52,8 @@ export class UsersDataService {
 
   deleteUser(id: string): boolean {
     const item = this.users.findIndex((user) => user.id === id);
-    if (item !== -1) this.users.splice(item, 1);
-    return item !== -1 ? true : false;
+    if (item === -1) return false;
+    this.users.splice(item, 1);
+    return true;
   }
 }

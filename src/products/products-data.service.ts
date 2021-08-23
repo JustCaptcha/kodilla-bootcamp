@@ -16,6 +16,7 @@ export class ProductsDataService {
   }
 
   addProduct(item: CreateProductDTO): Product {
+    console.log(item);
     const date = new Date();
     const newItem: Product = {
       id: uuid(),
@@ -23,7 +24,7 @@ export class ProductsDataService {
       createdAt: date,
       updatedAt: date,
     };
-    this.products.push(newItem);
+    this.products = [...this.products, newItem];
     return newItem;
   }
 }

@@ -1,3 +1,5 @@
+import { TransformFnParams } from 'class-transformer';
+
 export const dateToArray = (date: Date): Array<number> => {
     return [
        date.getFullYear(),
@@ -9,7 +11,7 @@ export const dateToArray = (date: Date): Array<number> => {
     ];
 };
 
-export const arrayToDate = (array: Array<number>): Date => {
+export const arrayToDate = (array: Array<number> | TransformFnParams): Date => {
    return new Date(
        array[0],
        array[1],
