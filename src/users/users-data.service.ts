@@ -1,59 +1,84 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDTO } from './dto/create-user.dto';
-import { User } from './interfaces/user.interface';
-import { uuid } from 'uuidv4';
-import { UpdateUserDTO } from './dto/update-user.dto';
+import {
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreateUserAddressDTO, CreateUserDTO } from './dto/create-user.dto';
+import { User } from './entities/user.entity';
+import { UpdateUserAddressDTO, UpdateUserDTO } from './dto/update-user.dto';
+import { UserRepository } from './repositories/user.repository';
+import { UserAddressRepository } from './repositories/user-address.repository';
+import { UserAddress } from './entities/user-address.entity';
+import { DeleteResult } from 'typeorm';
 
 @Injectable()
 export class UsersDataService {
-  private users: Array<User> = [];
+  constructor(
+    private userRepository: UserRepository,
+    private userAddressRepository: UserAddressRepository,
+  ) {}
 
-  getAllUsers(): User[] {
-    return this.users;
+  async getAllUsers(): Promise<User[]> {
+    return this.userRepository.find();
   }
 
-  getUserById(id: string): User {
-    const user = this.users.find((user) => user.id === id);
+  async getUserById(id: string): Promise<User> {
+    const user = await this.userRepository.findOne(id);
     if (!user) throw new NotFoundException('user is not found.');
     return user;
   }
 
-  getUserByEmail(email: string): User {
-    const user = this.users.find((user) => user.email === email);
-    return user;
-  }
-
-  addUser(item: CreateUserDTO): User {
-    const date = new Date();
-    const newItem: User = {
-      id: uuid(),
-      ...item,
-      dateOfBirth: date,
-    };
-    this.users = [...this.users, newItem];
-    return newItem;
-  }
-
-  updateUser(id: string, item: UpdateUserDTO): User {
-    this.users = this.users.map((i) => {
-      if (i.id === id) {
-        return {
-          ...i,
-          ...item,
-          id: id,
-        };
-      }
-
-      return i;
+  async addUser(item: CreateUserDTO): Promise<User> {
+    const userWithSameEmail = await this.userRepository.findOne({
+      where: { email: item.email },
     });
-
-    return this.getUserById(id);
+    if (userWithSameEmail)
+      throw new NotAcceptableException(
+        `User with email: ${item.email} is already exists`,
+      );
+    const userToSave = new User();
+    userToSave.address = await this.prepareUserAddressesToSave(item.address);
+    userToSave.dateOfBirth = item.dateOfBirth;
+    userToSave.email = item.email;
+    userToSave.firstName = item.firstName;
+    userToSave.lastName = item.lastName;
+    userToSave.role = item.role;
+    return this.userRepository.save(userToSave);
   }
 
-  deleteUser(id: string): boolean {
-    const item = this.users.findIndex((user) => user.id === id);
-    if (item === -1) return false;
-    this.users.splice(item, 1);
-    return true;
+  async updateUser(id: string, item: UpdateUserDTO): Promise<User> {
+    const userToSave = await this.userRepository.findOne(id);
+    if (!userToSave)
+      throw new NotFoundException(`User with ID: ${id} is not found.`);
+    this.userAddressRepository.deleteUserAddressesByUserId(id);
+    userToSave.address = await this.prepareUserAddressesToSave(item.address);
+    userToSave.dateOfBirth = item.dateOfBirth;
+    userToSave.email = item.email;
+    userToSave.firstName = item.firstName;
+    userToSave.lastName = item.lastName;
+    userToSave.role = item.role;
+    return this.userRepository.save(userToSave);
+  }
+
+  async deleteUser(id: string): Promise<DeleteResult> {
+    return await this.userRepository.delete(id);
+  }
+
+  async prepareUserAddressesToSave(
+    address: CreateUserAddressDTO[] | UpdateUserAddressDTO[],
+  ): Promise<UserAddress[]> {
+    const addresses: UserAddress[] = [];
+    for (const add of address) {
+      const addressToSave = new UserAddress();
+
+      addressToSave.country = add.country;
+      addressToSave.city = add.city;
+      addressToSave.street = add.street;
+      addressToSave.number = add.number;
+
+      addresses.push(await this.userAddressRepository.save(addressToSave));
+    }
+
+    return addresses;
   }
 }

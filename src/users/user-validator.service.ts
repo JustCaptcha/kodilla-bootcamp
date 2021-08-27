@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { UserRequireUniqueEmailException } from './exception/user-require-unique-email-exception';
-import { UsersDataService } from './users-data.service';
+import { UserRepository } from './repositories/user.repository';
 
 @Injectable()
 export class UserValidatorService {
-  constructor(private usersDataService: UsersDataService) {}
-  validateUniqueEmail(email: string): void {
-    if (this.usersDataService.getUserByEmail(email))
+  constructor(private userRepository: UserRepository) {}
+  async validateUniqueEmail(email: string): Promise<void> {
+    if (await this.userRepository.findUserByEmail(email))
       throw new UserRequireUniqueEmailException();
   }
 }

@@ -20,7 +20,7 @@ export class CreateUserDTO {
   @IsNotEmpty()
   email: string;
 
-  @Transform((d) => arrayToDate(d))
+  @Transform((d) => arrayToDate(d.value))
   dateOfBirth: Date;
 
   @ValidateNested({ each: true })

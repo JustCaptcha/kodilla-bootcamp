@@ -1,32 +1,65 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateProductDTO } from './dto/create-product.dto';
 import { ExternalProductDTO } from './dto/external-product.dto';
 import { ProductsDataService } from './products-data.service';
-import { Product } from './interfaces/product.interface';
+import { Product } from './entities/product.entity';
 import { dateToArray } from 'src/shared/helpers/date.helper';
 import { RoleGuard } from 'src/shared/guards/role.guard';
+import { UpdateProductDTO } from './dto/update-product.dto';
+import { DeleteResult } from 'typeorm';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private productRepository: ProductsDataService) {}
+  constructor(private productService: ProductsDataService) {}
+
+  @Get('id/:id')
+  async getProductById(@Param('id') id: string): Promise<ExternalProductDTO> {
+    return this.mapProductToExternal(
+      await this.productService.getProductById(id),
+    );
+  }
 
   @Get()
-  getAllProducts(): ExternalProductDTO[] {
+  async getAllProducts(): Promise<ExternalProductDTO[]> {
     const res = [];
-    const products = this.productRepository.getAllProducts();
+    const products = await this.productService.getAllProducts();
     products.forEach((product) => res.push(this.mapProductToExternal(product)));
     return res;
   }
 
-  @Get(':id')
-  getProductById(@Param('id') id: string): ExternalProductDTO {
-    return this.mapProductToExternal(this.productRepository.getProductById(id));
+  @UseGuards(RoleGuard)
+  @Post()
+  async addProduct(
+    @Body() item: CreateProductDTO,
+  ): Promise<ExternalProductDTO> {
+    return this.mapProductToExternal(
+      await this.productService.addProduct(item),
+    );
   }
 
-  @Post()
   @UseGuards(RoleGuard)
-  addProduct(@Body() item: CreateProductDTO): ExternalProductDTO {
-    return this.mapProductToExternal(this.productRepository.addProduct(item));
+  @Put('id/:id')
+  async updateProduct(
+    @Body() item: UpdateProductDTO,
+    @Param('id') id: string,
+  ): Promise<ExternalProductDTO> {
+    return this.mapProductToExternal(
+      await this.productService.updateProduct(id, item),
+    );
+  }
+
+  @Delete('id/:id')
+  async deleteUser(@Param('id') id: string): Promise<DeleteResult> {
+    return await this.productService.deleteProduct(id);
   }
 
   mapProductToExternal(product: Product): ExternalProductDTO {
@@ -34,6 +67,7 @@ export class ProductsController {
       ...product,
       createdAt: dateToArray(product.createdAt),
       updatedAt: dateToArray(product.updatedAt),
+      tags: product.tags?.map((i) => i.name),
     };
   }
 }
