@@ -5,13 +5,14 @@ import { ProductRepository } from './repositories/product.repository';
 import { TagRepository } from './repositories/tag.repository';
 import { Tag } from './entities/tag.entity';
 import { UpdateProductDTO } from './dto/update-product.dto';
-import { DeleteResult } from 'typeorm';
+import { Connection, DeleteResult, EntityManager } from 'typeorm';
 
 @Injectable()
 export class ProductsDataService {
   constructor(
     private productRepository: ProductRepository,
     private tagRepository: TagRepository,
+    private connection: Connection,
   ) {}
 
   async getProductById(id: string): Promise<Product> {
@@ -32,24 +33,30 @@ export class ProductsDataService {
   async updateProduct(id: string, item: UpdateProductDTO): Promise<Product> {
     const tags: Tag[] = await this.tagRepository.findTagsByName(item.tags);
     const productToUpdate = await this.getProductById(id);
-
-    productToUpdate.name = item.name;
-    productToUpdate.price = item.price;
-    productToUpdate.count = item.count;
-    productToUpdate.tags = tags;
-
-    await this.productRepository.save(productToUpdate);
-
-    return this.getProductById(id);
+    if (!productToUpdate)
+      throw new NotFoundException(`Product with ${id} does not found`);
+    return this.connection.transaction(async (entity: EntityManager) => {
+      productToUpdate.name = item.name;
+      productToUpdate.price = item.price;
+      productToUpdate.count = item.count;
+      productToUpdate.tags = tags;
+      return await entity
+        .getCustomRepository(ProductRepository)
+        .save(productToUpdate);
+    });
   }
 
   async addProduct(item: CreateProductDTO): Promise<Product> {
     const tags: Tag[] = await this.tagRepository.findTagsByName(item.tags);
-    const productToSave = new Product();
-    productToSave.name = item.name;
-    productToSave.price = item.price;
-    productToSave.count = item.count;
-    productToSave.tags = tags;
-    return this.productRepository.save(productToSave);
+    return this.connection.transaction(async (manager: EntityManager) => {
+      const productToSave = new Product();
+      productToSave.name = item.name;
+      productToSave.price = item.price;
+      productToSave.count = item.count;
+      productToSave.tags = tags;
+      return await manager
+        .getCustomRepository(ProductRepository)
+        .save(productToSave);
+    });
   }
 }

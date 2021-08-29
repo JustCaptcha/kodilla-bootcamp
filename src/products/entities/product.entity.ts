@@ -40,6 +40,9 @@ export class Product {
   })
   tags: Tag[];
 
+  @Column('text')
+  description: string;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

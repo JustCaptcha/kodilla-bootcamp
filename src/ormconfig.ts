@@ -7,4 +7,11 @@ export = {
   database: 'shop',
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: true,
+  dropSchema: true,
+  migrationsRun: true,
+  migrations: [__dirname + '/db/migrations/**/*{.ts,.js}'],
+  subscribers: [__dirname + '/db/subscribers/**/*{.ts,.js}'],
+  cli: {
+    migrationsDir: 'src/db/migrations',
+  },
 };
