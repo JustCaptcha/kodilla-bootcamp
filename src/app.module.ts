@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import * as cors from 'cors';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConnectionOptions } from 'typeorm';
+import { OrdersModule } from './orders/orders.module';
 
 import config = require('./ormconfig');
 
@@ -19,6 +20,7 @@ import config = require('./ormconfig');
     ProductsModule,
     UsersModule,
     TypeOrmModule.forRoot(config as ConnectionOptions),
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
