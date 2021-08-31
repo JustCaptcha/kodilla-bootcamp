@@ -10,6 +10,7 @@ import { UserRepository } from './repositories/user.repository';
 import { UserAddressRepository } from './repositories/user-address.repository';
 import { UserAddress } from './entities/user-address.entity';
 import { Connection, DeleteResult, EntityManager } from 'typeorm';
+import { UsersQuery } from './queries/users.query';
 
 @Injectable()
 export class UsersDataService {
@@ -19,8 +20,8 @@ export class UsersDataService {
     private connection: Connection,
   ) {}
 
-  async getAllUsers(): Promise<User[]> {
-    return this.userRepository.find();
+  async getAllUsers(_query_: UsersQuery): Promise<User[]> {
+    return this.userRepository.findAll(_query_);
   }
 
   async getUserById(id: string): Promise<User> {

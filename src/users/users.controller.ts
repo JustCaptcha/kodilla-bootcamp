@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { dateToArray } from 'src/shared/helpers/date.helper';
 import { DeleteResult } from 'typeorm';
@@ -13,6 +14,7 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { ExternalUserDTO } from './dto/external-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { UsersQuery } from './queries/users.query';
 import { UserValidatorService } from './user-validator.service';
 import { UsersDataService } from './users-data.service';
 
@@ -29,11 +31,10 @@ export class UsersController {
   }
 
   @Get()
-  async getAllUsers(): Promise<ExternalUserDTO[]> {
-    const res = [];
-    const products = await this.usersDataService.getAllUsers();
-    products.forEach((user) => res.push(this.mapUserToExternal(user)));
-    return res;
+  async getAllUsers(@Query() query: UsersQuery): Promise<ExternalUserDTO[]> {
+    return (await this.usersDataService.getAllUsers(query)).map((i) =>
+      this.mapUserToExternal(i),
+    );
   }
 
   @Post()

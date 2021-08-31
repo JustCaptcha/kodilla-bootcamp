@@ -6,6 +6,7 @@ import { TagRepository } from './repositories/tag.repository';
 import { Tag } from './entities/tag.entity';
 import { UpdateProductDTO } from './dto/update-product.dto';
 import { Connection, DeleteResult, EntityManager } from 'typeorm';
+import { ProductsQuery } from './queries/products.query';
 
 @Injectable()
 export class ProductsDataService {
@@ -22,8 +23,8 @@ export class ProductsDataService {
     return product;
   }
 
-  async getAllProducts(): Promise<Product[]> {
-    return this.productRepository.find();
+  async getAllProducts(_query_: ProductsQuery): Promise<Product[]> {
+    return this.productRepository.findAll(_query_);
   }
 
   async deleteProduct(id: string): Promise<DeleteResult> {
